@@ -141,28 +141,14 @@
             const jobInfo = getJobInfo();
             console.log('JobInfo extracted:', jobInfo);
 
-            // Send to backend API (local Flask server) with timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds
-
-            fetch('http://localhost:5000/api/job', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(jobInfo),
-              signal: controller.signal
-            })
-              .then(res => {
-                clearTimeout(timeoutId);
-                return res.ok ? 'Success!' : 'Failed to send';
-              })
-              .catch(err => {
-                clearTimeout(timeoutId);
-                if (err.name === 'AbortError') return 'Timeout (no response)';
-                return 'Error sending';
-              })
-              .then(status => {
-                sendResponse({ status });
-              });
+            // Send data to background script for secure API call
+            chrome.runtime.sendMessage({ action: 'sendToSheets', data: jobInfo }, (response) => {
+              if (response && response.status) {
+                sendResponse({ status: response.status });
+              } else {
+                sendResponse({ status: 'Error sending' });
+              }
+            });
 
             return true; // Keep the message channel open for async response
           }

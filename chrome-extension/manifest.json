@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Job Info Scraper",
+  "version": "1.0",
+  "description": "Scrape job info from current page and send to Google Sheets.",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://localhost:5000/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Job Info Scraper"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.indeed.com/*",
+        "*://indeed.com/*",
+        "*://*.linkedin.com/*",
+        "*://linkedin.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

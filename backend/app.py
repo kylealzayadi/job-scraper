@@ -7,6 +7,7 @@ import gspread
 import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 import os
+from config import SHEET_ID
 
 
 app = Flask(__name__)
@@ -48,7 +49,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CREDS_FILE = os.path.join(BASE_DIR, 'credentials.json')
 
 # Your Google Sheet ID
-SHEET_ID = '1g0VXteuoFceWUsztPemw_7Ixy33J5CxZQDjPePTgsko'
+# SHEET_ID loaded from config.py
 
 # Authorize Google Sheets
 creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPE)

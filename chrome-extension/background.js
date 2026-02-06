@@ -1,9 +1,13 @@
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWALdIr1PE5TqzEqYahwh5Xn4FDFw-O-7wAK_sqzS4Sm8G-JCXmHwtZ2MuLTsAmdAGWg/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgh-kvwwWvb7HMaRcfDcLrf2tOPfakqEezcIMxgM9vU3-aLVworR274D_AeRA5sixR/exec";
 const SECRET_TOKEN = "job-scraper-9f3a7c2b-PRIVATE";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'sendToSheets') {
     const { company, pay, role, link, date_applied } = message.data;
+
+    console.log('Sending to Apps Script:', {
+      company, pay, role, link, date_applied
+    });
 
     fetch(APPS_SCRIPT_URL, {
       method: "POST",
@@ -17,14 +21,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         date_applied: date_applied || ""
       })
     })
-      .then(r => r.json())
+      .then(r => {
+        console.log('HTTP Status:', r.status);
+        return r.json();
+      })
       .then(data => {
         console.log('Response from Apps Script:', data);
-        sendResponse({ status: 'Success!' });
+        if (data.status === 'success') {
+          sendResponse({ status: 'Success! Data saved to sheet' });
+        } else {
+          sendResponse({ status: 'Error: ' + (data.message || 'Unknown error') });
+        }
       })
       .catch(err => {
         console.error('Error sending to Apps Script:', err);
-        sendResponse({ status: 'Error sending' });
+        sendResponse({ status: 'Error: ' + err.message });
       });
 
     return true; // Keep channel open for async

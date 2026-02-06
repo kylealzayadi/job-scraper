@@ -1,4 +1,11 @@
 (function() {
+  // Prevent multiple injections
+  if (window.jobScraperInjected) {
+    console.log('Content script already loaded, skipping');
+    return;
+  }
+  window.jobScraperInjected = true;
+  
   console.log('content.js loaded on', window.location.href);
       // content script entry: collect job info from the page
       function getJobInfo() {
@@ -16,19 +23,41 @@
               document.querySelector('.jobsearch-CompanyInfoWithoutHeaderImage div.icl-u-lg-mr--sm, .jobsearch-InlineCompanyRating div, .jobsearch-CompanyReview--heading, .icl-u-lg-mr--sm.icl-u-xs-mr--xs')?.innerText || '';
         // Pay (try to capture a range displayed in job metadata)
         pay = Array.from(document.querySelectorAll('.jobsearch-JobMetadataHeader-item')).find(e => e.innerText.includes('$'))?.innerText || '';
+        
+        // Clean URL - extract job key and build short URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobKey = urlParams.get('jk');
+        if (jobKey) {
+          link = `https://www.indeed.com/viewjob?jk=${jobKey}`;
+        }
       } else if (window.location.hostname.includes('linkedin.com')) {
-        // Role
-        const roleEl = document.querySelector('p._071fc875._5b2ad80d') || document.querySelector('h1') || document.querySelector('h2');
+        // Role - try multiple selectors
+        const roleEl = 
+          document.querySelector('h1.top-card-layout__title') ||
+          document.querySelector('h1.t-24') ||
+          document.querySelector('.job-details-jobs-unified-top-card__job-title h1') ||
+          document.querySelector('h1') ||
+          document.querySelector('h2.t-24');
         role = roleEl?.innerText || '';
-        console.log('Role element found:', !!roleEl);
-        console.log('Role innerText:', role);
-        console.log('Role element outerHTML:', roleEl?.outerHTML); // debug
+        console.log('LinkedIn role element found:', !!roleEl);
+        console.log('LinkedIn role raw text:', role);
+        
+        // If selectors failed, try document.title but CLEAN IT first
+        if (!role) {
+          role = document.title || '';
+          console.log('Using document.title for role:', role);
+        }
+        
         // Company
-        company = document.querySelector('a.b964c9a7._06741cec')?.innerText || document.querySelector('.job-details-jobs-unified-top-card__company-name')?.innerText || '';
+        company = 
+          document.querySelector('.job-details-jobs-unified-top-card__company-name a') ||
+          document.querySelector('.job-details-jobs-unified-top-card__company-name') ||
+          document.querySelector('a.app-aware-link[href*="/company/"]');
+        company = company?.innerText || '';
         // Pay
-        const payEls = document.querySelectorAll('span[class*="_071fc875"]');
+        const payEls = document.querySelectorAll('span');
         for (const el of payEls) {
-          if (el.innerText.includes('$')) {
+          if (el.innerText.includes('$') && el.innerText.includes('/')) {
             pay = el.innerText;
             break;
           }
@@ -37,9 +66,31 @@
       }
 
       // Fallbacks for other sites (try generic selectors)
-      if (!company) company = document.querySelector('[data-company]')?.innerText || '';
-      if (!role) role = document.querySelector('h1')?.innerText || '';
-      if (!pay) pay = document.querySelector('[data-salary]')?.innerText || '';
+      if (!role) {
+        role = document.querySelector('h1.job-title')?.innerText || 
+               document.querySelector('h1[itemprop="title"]')?.innerText ||
+               document.querySelector('h1')?.innerText || 
+               document.querySelector('h2')?.innerText || '';
+      }
+      
+      if (!company) {
+        company = document.querySelector('[data-company]')?.innerText || 
+                  document.querySelector('[itemprop="hiringOrganization"]')?.innerText ||
+                  document.querySelector('.company-name')?.innerText ||
+                  document.querySelector('h2.text-secondary-400')?.innerText ||
+                  document.querySelector('a[href*="/company/"]')?.innerText || '';
+      }
+      
+      if (!pay) {
+        // Look for salary/compensation text anywhere on the page
+        const allText = document.body.innerText;
+        const salaryMatch = allText.match(/\$[\d,]+k?\s*-\s*\$[\d,]+k?\s*\/?\s*y(?:ea)?r?/i);
+        if (salaryMatch) {
+          pay = salaryMatch[0];
+        }
+      }
+      
+      if (!pay) pay = 'n/a';
 
       // Helper to clean titles like "Apply ... | Twitch | LinkedIn" or "Role | Company | LinkedIn"
       function cleanText(str) {
@@ -65,9 +116,6 @@
       role = cleanText(role);
       console.log('Cleaned role:', role); // debug
       company = cleanText(company) || (document.title || '').split('|').map(p => p.trim())[1] || '';
-
-      console.log('Raw role before clean:', role); // debug
-      console.log('Cleaned role:', role); // debug
 
       // Salary: try to capture ranges like "$16.49/hr - $23.92/hr" or single amounts
       if (!pay) {
@@ -98,7 +146,7 @@
               // ogTitle sometimes includes company too: "Role at Company"
               role = ogTitle.split(' at ')[0] || ogTitle;
             }
-            if (!role) role = document.title || '';
+            // Removed document.title fallback here since it's now handled in LinkedIn section
           }
 
           if (!company) {

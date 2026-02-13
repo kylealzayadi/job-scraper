@@ -3,7 +3,7 @@
   "name": "Job Info Scraper",
   "version": "1.0",
   "description": "Scrape job info from current page and send to Google Sheets.",
-  "permissions": ["activeTab", "scripting", "tabs"],
+  "permissions": ["activeTab", "scripting"],
   "host_permissions": ["http://localhost:5000/*", "https://script.google.com/*"],
   "action": {
     "default_popup": "popup.html",

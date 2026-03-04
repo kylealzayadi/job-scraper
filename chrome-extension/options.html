@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Job Scraper Settings</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+    }
+    .setting {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+      display: block;
+    }
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      display: block;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Job Scraper Settings</h1>
+  
+  <div class="setting">
+    <label for="appsScriptUrl">Google Apps Script Web App URL:</label>
+    <input 
+      type="text" 
+      id="appsScriptUrl" 
+      placeholder="https://script.google.com/macros/s/..."
+    />
+    <div class="help-text">
+      Paste the URL of your deployed Google Apps Script web app here. 
+      This is where your job data will be sent and saved to your Google Sheet.
+    </div>
+  </div>
+
+  <div class="setting">
+    <label for="secretToken">Secret Token (Optional):</label>
+    <input 
+      type="text" 
+      id="secretToken" 
+      placeholder="job-scraper-9f3a7c2b-PRIVATE"
+    />
+    <div class="help-text">
+      If your Apps Script requires a token for security, paste it here.
+    </div>
+  </div>
+
+  <button id="saveBtn">Save Settings</button>
+  <div id="status" class="status"></div>
+
+  <script src="options.js"></script>
+</body>
+</html>
